@@ -1,0 +1,169 @@
+import  pygame, sys, time,random
+from pygame.locals import *
+
+mainClock = pygame.time.Clock()
+pygame.init()
+counter = 0
+def doRectsOverlap(rect1,rect2):
+    for a,b in [(rect1['rect'],rect2['rect']),(rect2['rect'],rect1['rect'])]:
+        if  (
+            isPointInsideRect(a.left,a.top,b) or
+            isPointInsideRect(a.left,a.bottom,b) or
+            isPointInsideRect(a.right,a.top,b) or
+            isPointInsideRect(a.right,a.bottom,b)
+            ):
+            return True
+    return False
+def isPointInsideRect(x, y, rect):
+    if x > rect.left and x < rect.right and y < rect.bottom and y > rect.top:
+        return True
+
+WINDOWWIDTH=1000
+WINDOWHEIGHT=600
+windowSurface=pygame.display.set_mode((WINDOWWIDTH,WINDOWHEIGHT),0,32)
+pygame.display.set_caption("Rectangle's Hell with pygame")
+ # set up the colors
+foodCounter = 0
+FOODSIZE = 20
+moveLeft=False
+moveRight=False
+moveUp=False
+moveDown=False
+BLACK= (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+DARKBLUE = (0, 0, 150)
+DARKYELLOW = (150, 150, 0)
+YELLOW = (255, 255, 0)
+GRAY = (128, 128, 128)
+DOWNLEFT = 1
+DOWNRIGHT = 3
+UPLEFT = 7
+UPRIGHT = 9
+MOVESPEED = 6
+b1 = {'rect':pygame.Rect(300, 80, 50, 100),'color':RED,'dir':DOWNRIGHT}
+player = {'rect':pygame.Rect(0, 0, 20, 20),'color':BLUE}
+b2 = {'rect':pygame.Rect(178, 150, 120, 60),'color':RED,'dir':UPRIGHT}
+blocks=[b1,b2]
+foods = []
+for i in range(5):
+    foods.append({'rect':pygame.Rect(random.randint(0,WINDOWWIDTH-FOODSIZE),
+                random.randint(0, WINDOWHEIGHT-FOODSIZE),
+                FOODSIZE,FOODSIZE),'color':YELLOW})
+basicFont = pygame.font.SysFont(None, 50)
+text = basicFont.render('Score '+str(counter), True, GREEN)
+textRect = text.get_rect()
+textRect.top = 10
+textRect.left = 10
+while True:
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == KEYDOWN:
+            if event.key == K_LEFT or event.key == ord('a'):
+                moveRight = False
+                moveLeft = True
+            if event.key == K_RIGHT or event.key == ord('d'):
+                moveRight = True
+                moveLeft = False
+            if event.key == K_UP or event.key == ord('w'):
+                moveDown = False
+                moveUp = True
+            if event.key == K_DOWN or event.key == ord('s'):
+                moveUp = False
+                moveDown = True
+        if event.type == KEYUP:
+            if event.key == K_ESCAPE:
+                pygame.quit()
+                sys.exit()
+            if event.key == K_LEFT or event.key == ord('a'):
+                moveLeft = False
+            if event.key == K_UP or event.key == ord('w'):
+                moveUp = False
+            if event.key == K_RIGHT or event.key == ord('d'):
+                moveRight = False
+            if event.key == K_DOWN or event.key == ord('s'):
+                moveDown = False
+            if event.key == ord('x'):
+                player['rect'].top = random.randint(0,WINDOWHEIGHT-player['rect'].height)
+                player['rect'].left = random.randint(0,WINDOWWIDTH-player['rect'].width)
+        if event.type == MOUSEBUTTONUP:
+                foods.append({'rect':pygame.Rect(event.pos[0],
+                    event.pos[1], FOODSIZE, FOODSIZE), 'color':YELLOW})
+    windowSurface.fill(WHITE)
+    for b in blocks:
+        if b['dir'] == DOWNLEFT:
+            b['rect'].left -= MOVESPEED
+            b['rect'].top += MOVESPEED
+        if b['dir'] == UPRIGHT:
+            b['rect'].left += MOVESPEED
+            b['rect'].top -= MOVESPEED
+        if b['dir'] == DOWNRIGHT:
+            b['rect'].left += MOVESPEED
+            b['rect'].top += MOVESPEED
+        if b['dir'] == UPLEFT:
+            b['rect'].left -= MOVESPEED
+            b['rect'].top -= MOVESPEED
+        if b['rect'].top < 0:
+ # block has moved past the top
+            if b['dir'] == UPLEFT:
+                b['dir'] = DOWNLEFT
+            if b['dir'] == UPRIGHT:
+                b['dir'] = DOWNRIGHT
+        if b['rect'].bottom > WINDOWHEIGHT:
+         # block has moved past the bottom
+            if b['dir'] == DOWNLEFT:
+                    b['dir'] = UPLEFT
+            if b['dir'] == DOWNRIGHT:
+                    b['dir'] = UPRIGHT
+        if b['rect'].left < 0:
+         # block has moved past the left side
+            if b['dir'] == DOWNLEFT:
+                    b['dir'] = DOWNRIGHT
+            if b['dir'] == UPLEFT:
+                    b['dir'] = UPRIGHT
+        if b['rect'].right > WINDOWWIDTH:
+         # block has moved past the right side
+            if b['dir'] == DOWNRIGHT:
+                    b['dir'] = DOWNLEFT
+            if b['dir'] == UPRIGHT:
+                    b['dir'] = UPLEFT
+        pygame.draw.rect(windowSurface, b['color'], b['rect'])
+    foodCounter += 0.00001
+    if foodCounter >= 0.005:
+        # add new food
+        blocks.append({'rect':pygame.Rect(random.randint(0,
+                WINDOWWIDTH - 100), random.randint(0, WINDOWHEIGHT -
+                75), 100, 75),'color':RED,'dir':DOWNRIGHT})
+        foodCounter = 0
+        MOVESPEED +=1
+        for i in range(5):
+            foods.append({'rect':pygame.Rect(random.randint(0,
+                WINDOWWIDTH - FOODSIZE), random.randint(0, WINDOWHEIGHT -
+                FOODSIZE), FOODSIZE, FOODSIZE),'color':YELLOW})
+    if moveDown and player['rect'].bottom < WINDOWHEIGHT:
+        player['rect'].top += MOVESPEED
+    if moveUp and player['rect'].top > 0:
+        player['rect'].top -= MOVESPEED
+    if moveLeft and player['rect'].left > 0:
+        player['rect'].left -= MOVESPEED
+    if moveRight and player['rect'].right < WINDOWWIDTH:
+        player['rect'].left += MOVESPEED
+    pygame.draw.rect(windowSurface, player['color'], player['rect'])
+    for food in foods[:]:
+        if doRectsOverlap(player,food):
+            foods.remove(food)
+            counter += 1
+    for b in blocks[:]:
+        if doRectsOverlap(player, b):
+            pygame.quit()
+            sys.exit()
+    for i in foods:
+        pygame.draw.rect(windowSurface, i['color'], i['rect'])
+    text = basicFont.render('Score '+str(counter), True, GREEN)
+    windowSurface.blit(text,textRect)
+    pygame.display.update()
+    mainClock.tick(60)
